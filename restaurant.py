@@ -2,6 +2,9 @@ import streamlit as st
 import requests
 import pandas as pd
 import gdown
+import folium
+from folium import Marker
+from streamlit_folium import st_folium
 
 # Function to download the CSV from Google Drive
 @st.cache
@@ -77,18 +80,29 @@ if coords:
     st.header("Nearby Restaurant Recommendations:")
     restaurants = get_restaurant_recommendations(lat, lon)
 
-    if restaurants:
-        # Prepare data for the map
-        locations = pd.DataFrame([{
-            "name": restaurant["name"],
-            "latitude": restaurant["latitude"],
-            "longitude": restaurant["longitude"]
-        } for restaurant in restaurants])
+    # Create a Folium map centered around the user's location
+    m = folium.Map(location=[lat, lon], zoom_start=15)
 
-        # Display map with restaurant locations
-        st.map(locations[["latitude", "longitude"]])
-        
+    # Add marker for the user's location
+    folium.Marker(
+        location=[lat, lon],
+        popup="Your Location",
+        icon=folium.Icon(color="red", icon="info-sign")
+    ).add_to(m)
+
+    if restaurants:
+        # Add markers for recommended restaurants
         for restaurant in restaurants:
+            folium.Marker(
+                location=[restaurant["latitude"], restaurant["longitude"]],
+                popup=(
+                    f"<b>{restaurant['name']}</b><br>"
+                    f"Address: {restaurant['address']}<br>"
+                    f"Category: {restaurant['category']}"
+                ),
+                icon=folium.Icon(color="blue", icon="cloud")
+            ).add_to(m)
+            
             st.write(f"**{restaurant['name']}**")
             st.write(f"Address: {restaurant['address']}")
             st.write(f"Category: {restaurant['category']}")
@@ -106,5 +120,8 @@ if coords:
             st.write("---")
     else:
         st.write("No restaurants found nearby.")
+    
+    # Display the map in Streamlit
+    st_folium(m, width=725)
 else:
     st.write("Waiting for coordinates...")
