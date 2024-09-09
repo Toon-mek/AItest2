@@ -96,6 +96,9 @@ if coords:
                 ),
                 icon=folium.Icon(color="blue", icon="cloud")
             ).add_to(m)
+
+            # Display map with restaurant locations
+            st.map(locations[["latitude", "longitude"]])
             
             st.write(f"**{restaurant['name']}**")
             st.write(f"Address: {restaurant['address']}")
