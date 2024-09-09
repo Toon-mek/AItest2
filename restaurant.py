@@ -1,6 +1,5 @@
 import streamlit as st
 import requests
-from requests.structures import CaseInsensitiveDict
 import pandas as pd
 import gdown
 
@@ -63,7 +62,9 @@ if coords:
                 {
                     "name": place["properties"].get("name", "Unknown name"),
                     "address": place["properties"].get("formatted", "No address available"),
-                    "category": place["properties"]["categories"][0]
+                    "category": place["properties"]["categories"][0],
+                    "latitude": place["geometry"]["coordinates"][1],
+                    "longitude": place["geometry"]["coordinates"][0]
                 }
                 for place in restaurants
             ]
@@ -77,6 +78,16 @@ if coords:
     restaurants = get_restaurant_recommendations(lat, lon)
 
     if restaurants:
+        # Prepare data for the map
+        locations = pd.DataFrame([{
+            "name": restaurant["name"],
+            "latitude": restaurant["latitude"],
+            "longitude": restaurant["longitude"]
+        } for restaurant in restaurants])
+
+        # Display map with restaurant locations
+        st.map(locations[["latitude", "longitude"]])
+        
         for restaurant in restaurants:
             st.write(f"**{restaurant['name']}**")
             st.write(f"Address: {restaurant['address']}")
