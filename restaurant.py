@@ -2,6 +2,8 @@ import streamlit as st
 import requests
 import pandas as pd
 import gdown
+import folium
+from streamlit.components.v1 import html
 
 # Function to download the CSV from Google Drive
 @st.cache_data
@@ -49,65 +51,79 @@ st.markdown(get_geolocation(), unsafe_allow_html=True)
 coords = st.text_input("Enter your coordinates (latitude,longitude):", key="coords-input")
 
 if coords:
-    lat, lon = map(float, coords.split(","))
-    st.write(f"Detected Location: (Latitude: {lat}, Longitude: {lon})")
+    try:
+        lat, lon = map(float, coords.split(","))
+        st.success(f"Detected Location: (Latitude: {lat}, Longitude: {lon})")
 
-    # Use Geoapify Places API to fetch restaurant recommendations
-    def get_restaurant_recommendations(lat, lon):
-        url = f"https://api.geoapify.com/v2/places?categories=catering.restaurant&filter=circle:{lon},{lat},5000&limit=10&apiKey={GEOAPIFY_API_KEY}"
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            restaurants = data["features"]
-            restaurant_list = [
-                {
-                    "name": place["properties"].get("name", "Unknown name"),
-                    "address": place["properties"].get("formatted", "No address available"),
-                    "category": place["properties"]["categories"][0],
-                    "latitude": place["geometry"]["coordinates"][1],
-                    "longitude": place["geometry"]["coordinates"][0]
-                }
-                for place in restaurants
-            ]
-            return restaurant_list
-        else:
-            st.error("Failed to retrieve restaurant data.")
-            return []
-
-    # Get restaurant recommendations based on the exact location
-    st.header("Nearby Restaurant Recommendations:")
-    restaurants = get_restaurant_recommendations(lat, lon)
-
-    # Prepare data for st.map()
-    locations = [{"latitude": lat, "longitude": lon, "label": "Your Location"}]
-    for restaurant in restaurants:
-        locations.append({
-            "latitude": restaurant["latitude"],
-            "longitude": restaurant["longitude"],
-            "label": restaurant["name"]
-        })
-
-    # Display the map in Streamlit
-    st.map(pd.DataFrame(locations))
-
-    if restaurants:
-        for restaurant in restaurants:
-            st.write(f"**{restaurant['name']}**")
-            st.write(f"Address: {restaurant['address']}")
-            st.write(f"Category: {restaurant['category']}")
-            st.write("---")
-
-            # Extract reviews for the recommended restaurant
-            restaurant_reviews = reviews_df[reviews_df["Restaurant"].str.contains(restaurant['name'], case=False, na=False)]
-            
-            if not restaurant_reviews.empty:
-                st.write("**Reviews:**")
-                for _, review_row in restaurant_reviews.iterrows():
-                    st.write(f"- {review_row['Review']} (Rating: {review_row['Rating']})")
+        # Use Geoapify Places API to fetch restaurant recommendations
+        def get_restaurant_recommendations(lat, lon):
+            url = f"https://api.geoapify.com/v2/places?categories=catering.restaurant&filter=circle:{lon},{lat},5000&limit=10&apiKey={GEOAPIFY_API_KEY}"
+            response = requests.get(url)
+            if response.status_code == 200:
+                data = response.json()
+                restaurants = data["features"]
+                restaurant_list = [
+                    {
+                        "name": place["properties"].get("name", "Unknown name"),
+                        "address": place["properties"].get("formatted", "No address available"),
+                        "category": place["properties"]["categories"][0],
+                        "latitude": place["geometry"]["coordinates"][1],
+                        "longitude": place["geometry"]["coordinates"][0]
+                    }
+                    for place in restaurants
+                ]
+                return restaurant_list
             else:
-                st.write("No reviews found.")
-            st.write("---")
-    else:
-        st.write("No restaurants found nearby.")
+                st.error("Failed to retrieve restaurant data.")
+                return []
+
+        # Get restaurant recommendations based on the exact location
+        st.header("Nearby Restaurant Recommendations:")
+        restaurants = get_restaurant_recommendations(lat, lon)
+
+        # Create a Folium map centered around the user's location
+        m = folium.Map(location=[lat, lon], zoom_start=13)
+
+        # Add a marker for the user's location
+        folium.Marker(
+            [lat, lon], 
+            popup="Your Location",
+            icon=folium.Icon(color='blue', icon='user')
+        ).add_to(m)
+
+        # Add markers for each recommended restaurant
+        for restaurant in restaurants:
+            folium.Marker(
+                [restaurant['latitude'], restaurant['longitude']],
+                popup=f"{restaurant['name']}<br>{restaurant['address']}",
+                tooltip=restaurant['name'],
+                icon=folium.Icon(color='red', icon='cutlery')
+            ).add_to(m)
+
+        # Render the map in Streamlit
+        folium_map = m._repr_html_()  # Convert to HTML representation
+        html(folium_map, height=500)
+
+        if restaurants:
+            for restaurant in restaurants:
+                st.write(f"**{restaurant['name']}**")
+                st.write(f"Address: {restaurant['address']}")
+                st.write(f"Category: {restaurant['category']}")
+                st.write("---")
+
+                # Extract reviews for the recommended restaurant
+                restaurant_reviews = reviews_df[reviews_df["Restaurant"].str.contains(restaurant['name'], case=False, na=False)]
+                
+                if not restaurant_reviews.empty:
+                    st.write("**Reviews:**")
+                    for _, review_row in restaurant_reviews.iterrows():
+                        st.write(f"- {review_row['Review']} (Rating: {review_row['Rating']})")
+                else:
+                    st.write("No reviews found.")
+                st.write("---")
+        else:
+            st.write("No restaurants found nearby.")
+    except ValueError:
+        st.error("Invalid coordinates format. Please enter in 'latitude,longitude' format.")
 else:
     st.write("Waiting for coordinates...")
