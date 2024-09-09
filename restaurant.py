@@ -3,20 +3,14 @@ import requests
 import pandas as pd
 import gdown
 import folium
-from folium import Marker
 from streamlit_folium import st_folium
 
 # Function to download the CSV from Google Drive
-@st.cache
+@st.cache_data
 def download_data_from_drive():
-    # Google Drive link for the dataset (convert to direct download link)
     url = 'https://drive.google.com/uc?id=1Tc3Hequ5jVjamAfuPhpBv8JvsOp7LSJY'
     output = 'restaurant_reviews.csv'
-    
-    # Download the file without printing progress (quiet=True)
     gdown.download(url, output, quiet=True)
-    
-    # Load the dataset
     return pd.read_csv(output)
 
 # Load the dataset of restaurant reviews
@@ -53,7 +47,7 @@ coords = st.text_input("Enter your coordinates (latitude,longitude):")
 if coords:
     lat, lon = map(float, coords.split(","))
     st.write(f"Detected Location: (Latitude: {lat}, Longitude: {lon})")
-    
+
     # Use Geoapify Places API to fetch restaurant recommendations
     def get_restaurant_recommendations(lat, lon):
         url = f"https://api.geoapify.com/v2/places?categories=catering.restaurant&filter=circle:{lon},{lat},5000&limit=10&apiKey={GEOAPIFY_API_KEY}"
@@ -121,7 +115,7 @@ if coords:
     else:
         st.write("No restaurants found nearby.")
     
-    # Display the map in Streamlit
+    # Display the map in Streamlit using streamlit_folium
     st_folium(m, width=725)
 else:
     st.write("Waiting for coordinates...")
