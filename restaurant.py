@@ -1,11 +1,8 @@
-import folium
 import streamlit as st
 import requests
 from requests.structures import CaseInsensitiveDict
 import pandas as pd
 import gdown
-
-from streamlit_folium import st_folium
 
 # Function to download the CSV from Google Drive
 @st.cache
@@ -47,17 +44,6 @@ st.title("Restaurant Recommendation System")
 
 # Show geolocation script
 st.markdown(get_geolocation(), unsafe_allow_html=True)
-
-# Input for the user to copy the geolocation data (or you can handle it via JavaScript events)
-coords = st.text_input("Enter your coordinates (latitude,longitude):")
-# center on Liberty Bell, add marker
-m = folium.Map(location=[39.949610, -75.150282], zoom_start=16)
-folium.Marker(
-    [39.949610, -75.150282], popup="Liberty Bell", tooltip="Liberty Bell"
-).add_to(m)
-
-# call to render Folium map in Streamlit
-st_data = st_folium(m, width=725)
 
 if coords:
     lat, lon = map(float, coords.split(","))
