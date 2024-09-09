@@ -3,9 +3,8 @@ import requests
 from requests.structures import CaseInsensitiveDict
 import pandas as pd
 import gdown
-from streamlit_folium import folium_static
 import folium
-import time
+from streamlit.components.v1 import html
 
 # Function to download the CSV from Google Drive
 @st.cache_data
@@ -95,8 +94,10 @@ if coords:
                     [restaurant['lat'], restaurant['lon']],
                     popup=f"{restaurant['name']} - {restaurant['address']}"
                 ).add_to(m)
-            folium_static(m)
-
+            # Display the map directly with _repr_html_()
+            folium_map = m._repr_html_()
+            html(folium_map, height=500)
+            
             for restaurant in restaurants:
                 st.write(f"**{restaurant['name']}**")
                 st.write(f"Address: {restaurant['address']}")
