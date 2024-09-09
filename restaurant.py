@@ -2,9 +2,6 @@ import streamlit as st
 import requests
 import pandas as pd
 import gdown
-import folium
-from streamlit_folium import st_folium
-import streamlit.components.v1 as components
 
 # Function to download the CSV from Google Drive
 @st.cache_data
@@ -75,29 +72,16 @@ if coords:
     st.header("Nearby Restaurant Recommendations:")
     restaurants = get_restaurant_recommendations(lat, lon)
 
-    # Create a Folium map centered around the user's location
-    m = folium.Map(location=[lat, lon], zoom_start=15)
+    # Prepare data for st.map()
+    locations = [{"latitude": lat, "longitude": lon}]
+    for restaurant in restaurants:
+        locations.append({"latitude": restaurant["latitude"], "longitude": restaurant["longitude"]})
 
-    # Add marker for the user's location
-    folium.Marker(
-        location=[lat, lon],
-        popup="Your Location",
-        icon=folium.Icon(color="red", icon="info-sign")
-    ).add_to(m)
+    # Display the map in Streamlit
+    st.map(pd.DataFrame(locations))
 
     if restaurants:
-        # Add markers for recommended restaurants
         for restaurant in restaurants:
-            folium.Marker(
-                location=[restaurant["latitude"], restaurant["longitude"]],
-                popup=(
-                    f"<b>{restaurant['name']}</b><br>"
-                    f"Address: {restaurant['address']}<br>"
-                    f"Category: {restaurant['category']}"
-                ),
-                icon=folium.Icon(color="blue", icon="cloud")
-            ).add_to(m)
-
             st.write(f"**{restaurant['name']}**")
             st.write(f"Address: {restaurant['address']}")
             st.write(f"Category: {restaurant['category']}")
@@ -115,14 +99,5 @@ if coords:
             st.write("---")
     else:
         st.write("No restaurants found nearby.")
-    
-    # Display the map in Streamlit using streamlit_folium
-    try:
-        st_folium(m, width=725)
-    except Exception as e:
-        st.error(f"Error displaying map: {e}")
-        # Fallback method if st_folium fails
-        map_html = m._repr_html_()
-        components.html(map_html, height=500)
 else:
     st.write("Waiting for coordinates...")
