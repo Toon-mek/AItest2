@@ -1,9 +1,9 @@
+import folium
 import streamlit as st
 import requests
 from requests.structures import CaseInsensitiveDict
 import pandas as pd
 import gdown
-import folium
 
 from streamlit_folium import st_folium
 
