@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import pandas as pd
 import gdown
+import pydeck as pdk
 
 # Function to download the CSV from Google Drive
 @st.cache_data
@@ -72,13 +73,35 @@ if coords:
     st.header("Nearby Restaurant Recommendations:")
     restaurants = get_restaurant_recommendations(lat, lon)
 
-    # Prepare data for st.map()
-    locations = [{"latitude": lat, "longitude": lon}]
+    # Prepare data for pydeck
+    deck_data = [{"latitude": lat, "longitude": lon, "label": "Your Location"}]
     for restaurant in restaurants:
-        locations.append({"latitude": restaurant["latitude"], "longitude": restaurant["longitude"]})
+        deck_data.append({
+            "latitude": restaurant["latitude"], 
+            "longitude": restaurant["longitude"],
+            "label": restaurant["name"]
+        })
 
-    # Display the map in Streamlit
-    st.map(pd.DataFrame(locations))
+    # Create a Deck.gl map
+    st.pydeck_chart(pdk.Deck(
+        initial_view_state=pdk.ViewState(
+            latitude=lat,
+            longitude=lon,
+            zoom=14,
+            pitch=0
+        ),
+        layers=[
+            pdk.Layer(
+                "ScatterplotLayer",
+                data=deck_data,
+                get_position=["longitude", "latitude"],
+                get_fill_color=[255, 0, 0, 140],
+                get_radius=200,
+                pickable=True
+            )
+        ],
+        tooltip={"text": "{label}"}
+    ))
 
     if restaurants:
         for restaurant in restaurants:
