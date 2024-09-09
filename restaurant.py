@@ -27,10 +27,16 @@ def get_geolocation():
                 const latitude = position.coords.latitude;
                 const longitude = position.coords.longitude;
                 document.getElementById("geo-data").innerHTML = latitude + "," + longitude;
+                // Send latitude and longitude to Streamlit
+                const coordsInput = document.getElementById("coords-input");
+                if (coordsInput) {
+                    coordsInput.value = latitude + "," + longitude;
+                }
             }
         );
         </script>
         <p id="geo-data">Waiting for geolocation...</p>
+        <input type="hidden" id="coords-input" />
     """
     return geolocation_code
 
@@ -40,8 +46,8 @@ st.title("Restaurant Recommendation System")
 # Show geolocation script
 st.markdown(get_geolocation(), unsafe_allow_html=True)
 
-# Input for the user to copy the geolocation data (or you can handle it via JavaScript events)
-coords = st.text_input("Enter your coordinates (latitude,longitude):")
+# Input for the user to copy the geolocation data
+coords = st.text_input("Enter your coordinates (latitude,longitude):", key="coords-input")
 
 if coords:
     lat, lon = map(float, coords.split(","))
@@ -74,10 +80,12 @@ if coords:
     restaurants = get_restaurant_recommendations(lat, lon)
 
     # Prepare data for pydeck
-    deck_data = [{"latitude": lat, "longitude": lon, "label": "Your Location"}]
+    deck_data = [
+        {"latitude": lat, "longitude": lon, "label": "Your Location"}
+    ]
     for restaurant in restaurants:
         deck_data.append({
-            "latitude": restaurant["latitude"], 
+            "latitude": restaurant["latitude"],
             "longitude": restaurant["longitude"],
             "label": restaurant["name"]
         })
@@ -95,7 +103,7 @@ if coords:
                 "ScatterplotLayer",
                 data=deck_data,
                 get_position=["longitude", "latitude"],
-                get_fill_color=[255, 0, 0, 140],
+                get_fill_color=[255, 0, 0, 140],  # Red for user's location
                 get_radius=200,
                 pickable=True
             )
