@@ -1,3 +1,4 @@
+import streamlit as st
 import requests
 from requests.structures import CaseInsensitiveDict
 import pandas as pd
@@ -43,6 +44,9 @@ st.title("Restaurant Recommendation System")
 
 # Show geolocation script
 st.markdown(get_geolocation(), unsafe_allow_html=True)
+
+# Input for the user to copy the geolocation data (or you can handle it via JavaScript events)
+coords = st.text_input("Enter your coordinates (latitude,longitude):")
 
 if coords:
     lat, lon = map(float, coords.split(","))
@@ -93,4 +97,3 @@ if coords:
         st.write("No restaurants found nearby.")
 else:
     st.write("Waiting for coordinates...")
-
