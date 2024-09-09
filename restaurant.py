@@ -4,6 +4,7 @@ import pandas as pd
 import gdown
 import folium
 from streamlit_folium import st_folium
+import streamlit.components.v1 as components
 
 # Function to download the CSV from Google Drive
 @st.cache_data
@@ -116,6 +117,12 @@ if coords:
         st.write("No restaurants found nearby.")
     
     # Display the map in Streamlit using streamlit_folium
-    st_folium(m, width=725)
+    try:
+        st_folium(m, width=725)
+    except Exception as e:
+        st.error(f"Error displaying map: {e}")
+        # Fallback method if st_folium fails
+        map_html = m._repr_html_()
+        components.html(map_html, height=500)
 else:
     st.write("Waiting for coordinates...")
