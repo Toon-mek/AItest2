@@ -4,4 +4,3 @@ requests
 pandas
 gdown
 folium
-streamlit folium streamlit-folium gdown requests pandas
