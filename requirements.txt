@@ -5,3 +5,4 @@ pandas
 gdown
 folium
 pydeck
+streamlit_geolocation
