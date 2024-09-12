@@ -99,12 +99,12 @@ if coords:
         ).add_to(m)
 
     # Render the map in Streamlit
-    folium_map = m.repr_html()  # Convert to HTML representation
+    folium_map = m._repr_html_()  # Convert to HTML representation
     html(folium_map, height=500)
 
     if restaurants:
         for idx, restaurant in enumerate(restaurants):
-            st.write(f"*{restaurant['name']}*")
+            st.write(f"**{restaurant['name']}**")
             st.write(f"Address: {restaurant['address']}")
             st.write(f"Category: {restaurant['category']}")
             show_reviews = st.button(f"Show Reviews for {restaurant['name']}", key=idx)
@@ -114,7 +114,7 @@ if coords:
                 restaurant_reviews = reviews_df[reviews_df["Restaurant"].str.contains(restaurant['name'], case=False, na=False)]
                 
                 if not restaurant_reviews.empty:
-                    st.write("*Reviews:*")
+                    st.write("**Reviews:**")
                     for _, review_row in restaurant_reviews.iterrows():
                         st.write(f"- {review_row['Review']} (Rating: {review_row['Rating']})")
                 else:
